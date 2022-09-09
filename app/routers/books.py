@@ -14,7 +14,7 @@ router = APIRouter(
 
 @router.get('/')
 def get_books() -> dict:
-    books = db.session.query(Book).all()
+    books = db.session.query(Book).first()
     return books
 
 
