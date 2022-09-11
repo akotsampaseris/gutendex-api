@@ -11,11 +11,6 @@ router = APIRouter(
     tags=["books"],
 )
 
-@router.get('/')
-def get_books() -> dict:
-    return BookService.get_book_reviews(84)
-
-
 @router.get('/book/{book_id}')
 def get_book_by_id(book_id: int = None) -> dict:
     book = BookService.get_book_by_id(book_id)

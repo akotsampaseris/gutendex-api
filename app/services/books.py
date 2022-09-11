@@ -24,7 +24,8 @@ class BookService():
     @classmethod
     def get_book_reviews(cls, book_id: int = None):
         results = db.session.query(BookReview).\
-            filter_by(book_id=book_id).all()
+            filter_by(book_id=book_id).\
+            order_by(BookReview.created_at.desc()).all()
         
         return results
 
@@ -35,7 +36,10 @@ class BookService():
             return []
         
         url = cls.base_url
-        response = requests.get(url, params={"search": title.replace(' ', '%20')})
+        response = requests.get(
+            url, 
+            params={"search": title.replace(' ', '%20')}
+        )
         results = response.json()['results']        
         
         return [BookModel(**result) for result in results]
@@ -44,17 +48,18 @@ class BookService():
     @classmethod
     def post_book_review(cls, book_review: BookReviewModel = None):        
         try:
-            db.session.add(
-                BookReview(
+            new_review = BookReview(
                     book_id = book_review.book_id, 
                     rating=book_review.rating, 
                     comment=book_review.comment,
                     created_at=datetime.now()
                 )
-            )
+            
+            db.session.add(new_review)
             db.session.commit()
             
-            return book_review            
+            return book_review
+              
         except ValueError:
             raise ValueError
             
