@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, HTTPException
 from fastapi_sqlalchemy import db
 
-from app.models.book import BookModel, Book
+from app.models.book import BookModel
 from app.models.book_review import BookReviewModel, BookReview
 
-from app.services.book import BookService
-from app.services.gutendex import GutendexService
+from app.services.books import BookService
 
 router = APIRouter(
     prefix="/books",
@@ -14,43 +13,30 @@ router = APIRouter(
 
 @router.get('/')
 def get_books() -> dict:
-    books = db.session.query(Book).first()
-    return books
+    return BookService.get_book_reviews(84)
 
 
-@router.get('/reviews')
-def get_book_reviews() -> dict:
-    book = db.session.query(Book).first()
-
-    return book.reviews
-
-
-@router.get('/book/{id}')
-def get_book_by_id(id: int = None) -> dict:
-    book = GutendexService.get_book_by_id(id)
+@router.get('/book/{book_id}')
+def get_book_by_id(book_id: int = None) -> dict:
+    book = BookService.get_book_by_id(book_id)
+    book.reviews = BookService.get_book_reviews(book_id)
     
     return book
 
 
-@router.post('/book/{id}/post-review')
-def post_book_review(book_review: BookReviewModel) -> dict:
-    book = GutendexService.get_book_by_id(book_review.book_id)
+@router.post('/book/{book_id}/post-review')
+def post_book_review(book_review: BookReviewModel):
+    book_review = BookService.post_book_review(book_review)
     
-    db.session.add(
-        BookReview(
-            book_id = book_review.book_id, 
-            rating=book_review.rating, 
-            review=book_review.review
-        )
-    )
-
-    db.session.commit()
-
+    if not book_review:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
     return book_review
 
-    
+
 
 @router.get('/search')
 def search_books_by_title(title: str = None) -> list:
-    return GutendexService.search_book_by_title(title)
-
+    books = BookService.search_book_by_title(title)
+    
+    return books
