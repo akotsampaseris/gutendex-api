@@ -22,24 +22,39 @@ class BookService():
 
 
     @classmethod
-    def get_book_reviews(cls, book_id: int = None):
+    def get_book_reviews(cls, book_id: int = None) -> list:
         results = db.session.query(BookReview).\
             filter_by(book_id=book_id).\
             order_by(BookReview.created_at.desc()).all()
-        
+            
         return results
 
+
+    @classmethod
+    def get_book_avg_rating(cls, reviews: list = None) -> float:
+        if len(reviews) <= 0:
+            return None
+        
+        rating = sum([review.rating for review in reviews])
+        rating /= len(reviews)
+        
+        if rating.is_integer():
+            return "{:.0f}".format(rating)
+        else:
+            return "{:.1f}".format(rating)
+            
 
     @classmethod
     def search_book_by_title(cls, title: str = None) -> list:
         if not title:
             return []
         
-        url = cls.base_url
-        response = requests.get(
-            url, 
-            params={"search": title.replace(' ', '%20')}
-        )
+        search_string = title.replace(' ', '%20')
+        query_param = ''.join(['?search=', search_string])
+        url = '/'.join([cls.base_url, query_param])
+        
+        response = requests.get(url)
+        
         results = response.json()['results']        
         
         return [BookModel(**result) for result in results]

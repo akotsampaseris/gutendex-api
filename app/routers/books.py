@@ -15,6 +15,7 @@ router = APIRouter(
 def get_book_by_id(book_id: int = None) -> dict:
     book = BookService.get_book_by_id(book_id)
     book.reviews = BookService.get_book_reviews(book_id)
+    book.rating = BookService.get_book_avg_rating(book.reviews)
     
     return book
 
